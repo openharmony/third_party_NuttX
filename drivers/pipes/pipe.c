@@ -232,8 +232,9 @@ static void UpdateDev(struct pipe_dev_s *dev)
     FAR struct inode *node;
     struct pipe_dev_s *olddev = NULL;
 
+    char devname[16];
     struct inode_search_s desc;
-    SETUP_SEARCH(&desc, dev->name, fasle);
+    SETUP_SEARCH(&desc, dev->name, false);
     FAR const char *path = desc.path;
     FAR const char **relpath = &(desc.relpath);
     FAR struct inode **peer = &(desc.peer);
@@ -248,6 +249,12 @@ static void UpdateDev(struct pipe_dev_s *dev)
         return;
     }
     node = desc.node;
+    snprintf_s(devname, sizeof(devname), sizeof(devname) - 1, "pipe%d\n", dev->d_pipeno);
+    if (strncmp(devname, node->i_name, strlen(devname)) != 0) {
+        inode_semgive();
+        PRINT_ERR("[%s,%d] failed %s  %s .\n", __FUNCTION__, __LINE__, devname, node->i_name);
+        return;
+    }
     olddev = (struct pipe_dev_s *)node->i_private;
     if (olddev != NULL)
     {
@@ -357,6 +364,7 @@ errout_with_wrfd:
 
 errout_with_driver:
   unregister_driver(devname);
+  g_pipecreated &= ~(1 << pipeno);
 
 errout_with_dev:
   if (dev)
