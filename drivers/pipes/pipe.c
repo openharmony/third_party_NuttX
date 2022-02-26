@@ -354,6 +354,9 @@ errout_with_wrfd:
 
 errout_with_driver:
   unregister_driver(devname);
+  (void)sem_wait(&g_pipesem);
+  g_pipecreated &= ~(1 << pipeno);
+  (void)sem_post(&g_pipesem);
 
 errout_with_dev:
   if (dev)
