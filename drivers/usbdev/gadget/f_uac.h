@@ -63,7 +63,7 @@ struct uac_dev_s
 
   volatile int connected;        /* Connected to USB host ? */
   int          count;
-  uint32_t     fid;              /* Frame Indentifier */
+  uint32_t     fid;              /* Frame Identifier */
 
   struct list_head       uac_queue;
   int                    uac_queue_len;

@@ -809,7 +809,6 @@ static int fconfig_enable_udc(struct fconfig_softc *cdev, void *user_data)
     }
 
   gi->udc_name = udc_name;
-  /* TODO: Enable UDC */
   ret = fconfig_composite_initialize(gi, com_s);
   if (ret)
     {

@@ -371,7 +371,7 @@ static ssize_t generic_epfile_handle_write(struct usb_handle *handle, void *buff
   uint32_t list_flags;
   if (epfile == NULL)
     {
-      usb_err("%s: Invalide parameter!\n", __FUNCTION__);
+      usb_err("%s: Invalid parameter!\n", __FUNCTION__);
       return -1;
     }
 

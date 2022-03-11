@@ -964,7 +964,7 @@ void fmass_handle_scsi_data(struct mass_dev_s *fmass)
 
   if (is_data_phase)
     {
-      /* wait for the data tranfer done */
+      /* wait for the data transfer done */
 
       if (!fmass_wait_intr(fmass, taskstate_unmatch(fmass, FMASS_TASK_REQ_DATA_PHASE), (5*HZ)))
         {
