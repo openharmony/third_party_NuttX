@@ -720,7 +720,7 @@ struct uvc_dev_s
   int                                        connected;     /* Connected to USB host? */
 
   void                                      *uvc_handle;    /* UVC transmission handle */
-  uint32_t                                   fid;           /* Frame Indentifier */
+  uint32_t                                   fid;           /* Frame Identifier */
   uint64_t                                   last_complete; /* Last Video stream complete tick */
 
   struct uvc_format_info                     format_info;

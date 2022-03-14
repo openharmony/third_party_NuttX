@@ -398,7 +398,7 @@ void generic_dev_closed(struct generic_dev_s *dev)
       generic_dev_reset(dev);
     }
 
-  /* decress the reference value and release the device
+  /* decrees the reference value and release the device
    * if there is no reference.
    */
   generic_dev_put(dev);
@@ -541,7 +541,7 @@ static int usbclass_generic_bind(struct usbdevclass_driver_s *driver,
     }
   (VOID)LOS_EventInit(&priv->ctrlreq_event);
   (VOID)LOS_EventInit(&priv->ep0_event);
-  /* allocate endpoints and conresponding reqeusts */
+  /* allocate endpoints and conresponding requests */
   priv->speed = USB_SPEED_HIGH;
   ret = generic_eps_alloc(priv);
   if (ret != 0)
@@ -874,7 +874,7 @@ static void generic_get_composite_devdesc(struct composite_devdesc_s *dev,
   dev->nconfigs = GENERIC_NCONFIGS; /* Number of configurations supported */
   dev->configid = GENERIC_CONFIGID; /* The only supported configuration ID */
 
-  /* get generic deivce by minor */
+  /* get generic device by minor */
   priv = generic_dev_find_by_minor(minor);
   if (priv == NULL)
     {
