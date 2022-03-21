@@ -1183,7 +1183,7 @@ int generic_create_ep0(struct generic_dev_s *dev)
       goto err;
     }
   ret = strncat_s(dev_name, GENERIC_PATH_LEN, "/ep0", strlen("/ep0"));
-  if (ret < 0)
+  if (ret != EOK)
     {
       usb_err("usb make ep0 file path error! ret = %d, errono = %d\n",
               ret, get_errno());
