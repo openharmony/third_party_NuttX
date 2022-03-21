@@ -162,7 +162,7 @@ uint8_t eth_set_hwaddr(struct netif *usb_netif, uint8_t *addr, uint8_t len)
 
   if (is_multicast_eth_addr(addr))
     {
-      usb_err("config a muticast mac address, please check!\n");
+      usb_err("config a multicast mac address, please check!\n");
       return 1;
     }
 

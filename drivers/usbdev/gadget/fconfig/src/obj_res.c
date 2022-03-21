@@ -154,7 +154,7 @@ void *usbm_zalloc(struct usb_obj *obj, size_t size)
   data = usbm_malloc(obj, size);
   if (data)
     {
-      memset_s(data, size, 0, size);
+      (void)memset_s(data, size, 0, size);
     }
   return data;
 }
@@ -189,7 +189,7 @@ char *usbm_strdup(struct usb_obj *obj, const char *s)
   buf = usbm_malloc(obj, size);
   if (buf)
     {
-      memcpy_s(buf, size, s, size);
+      (void)memcpy_s(buf, size, s, size);
     }
   return buf;
 }
