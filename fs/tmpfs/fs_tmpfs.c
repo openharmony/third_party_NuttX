@@ -137,6 +137,7 @@ int  tmpfs_unmount(struct Mount *mnt, struct Vnode **blkdriver);
 int tmpfs_lookup(struct Vnode *parent, const char *name, int len, struct Vnode **vpp);
 ssize_t tmpfs_write(struct file *filep, const char *buffer, size_t buflen);
 ssize_t tmpfs_read(struct file *filep, char *buffer, size_t buflen);
+ssize_t tmpfs_readpage(struct Vnode *vnode, char *buffer, off_t off);
 int tmpfs_stat(struct Vnode *vp, struct stat *st);
 int tmpfs_opendir(struct Vnode *vp, struct fs_dirent_s *dir);
 int tmpfs_readdir(struct Vnode *vp, struct fs_dirent_s *dir);
@@ -166,6 +167,8 @@ struct VnodeOps tmpfs_vops = {
     .Getattr = tmpfs_stat,
     .Opendir = tmpfs_opendir,
     .Readdir = tmpfs_readdir,
+    .ReadPage = tmpfs_readpage,
+    .WritePage = NULL,
     .Rename = tmpfs_rename,
     .Mkdir = tmpfs_mkdir,
     .Create = tmpfs_create,
@@ -548,11 +551,6 @@ static int tmpfs_create_file(struct tmpfs_s *fs,
     {
       /* No subdirectories... use the root directory */
       parent = (struct tmpfs_directory_s *)fs->tfs_root.tde_object;
-
-      /* Lock the root directory to emulate the behavior of tmpfs_find_directory() */
-
-      tmpfs_lock_directory(parent);
-      parent->tdo_refs++;
     }
   else
     {
@@ -563,6 +561,8 @@ static int tmpfs_create_file(struct tmpfs_s *fs,
       ret = -EEXIST;
       goto errout_with_copy;
     }
+  tmpfs_lock_directory(parent);
+  parent->tdo_refs++;
 
   /* Verify that no object of this name already exists in the directory */
   tde = tmpfs_find_dirent(parent, copy);
@@ -695,9 +695,6 @@ static int tmpfs_create_directory(struct tmpfs_s *fs,
       /* No subdirectories... use the root directory */
 
       parent = (struct tmpfs_directory_s *)fs->tfs_root.tde_object;
-
-      tmpfs_lock_directory(parent);
-      parent->tdo_refs++;
     }
   else
     {
@@ -710,6 +707,8 @@ static int tmpfs_create_directory(struct tmpfs_s *fs,
       ret = -EEXIST;
       goto errout_with_copy;
     }
+  tmpfs_lock_directory(parent);
+  parent->tdo_refs++;
   tde = tmpfs_find_dirent(parent, copy);
   if (tde != NULL)
     {
@@ -1065,7 +1064,7 @@ ssize_t tmpfs_read(struct file *filep, char *buffer, size_t buflen)
   loff_t startpos;
   loff_t endpos;
 
-  DEBUGASSERT(filep->f_priv != NULL && filep->f_vnode != NULL);
+  DEBUGASSERT(filep->f_vnode != NULL);
 
   /* Recover our private data from the struct file instance */
 
@@ -1113,6 +1112,66 @@ ssize_t tmpfs_read(struct file *filep, char *buffer, size_t buflen)
   tmpfs_unlock_file(tfo);
   return nread;
 }
+
+/****************************************************************************
+ * Name: tmpfs_readpage
+ ****************************************************************************/
+
+ssize_t tmpfs_readpage(struct Vnode *vnode, char *buffer, off_t off)
+{
+  struct tmpfs_file_s *tfo;
+  ssize_t nread;
+  loff_t startpos;
+  loff_t endpos;
+
+  DEBUGASSERT(vnode->data != NULL);
+
+  /* Recover our private data from the vnode */
+
+  tfo = (struct tmpfs_file_s *)(vnode->data);
+  if (tfo == NULL)
+    {
+      return -EINVAL;
+    }
+  if (off >= tfo->tfo_size)
+    {
+      return 0;
+    }
+
+  /* Get exclusive access to the file */
+
+  tmpfs_lock_file(tfo);
+
+  /* Handle attempts to read beyond the end of the file. */
+
+  startpos = off;
+  nread    = PAGE_SIZE;
+  endpos   = startpos + PAGE_SIZE;
+
+  if (endpos > tfo->tfo_size)
+    {
+      endpos = tfo->tfo_size;
+      nread  = endpos - startpos;
+    }
+
+  /* Copy data from the memory object to the user buffer */
+
+  if (LOS_CopyFromKernel(buffer, PAGE_SIZE, &tfo->tfo_data[startpos], nread) != 0)
+    {
+      tmpfs_unlock_file(tfo);
+      return -EINVAL;
+    }
+
+  /* Update the node's access time */
+
+  tfo->tfo_atime = tmpfs_timestamp();
+
+  /* Release the lock on the file */
+
+  tmpfs_unlock_file(tfo);
+  return nread;
+}
+
 
 /****************************************************************************
  * Name: tmpfs_create
@@ -1209,7 +1268,7 @@ ssize_t tmpfs_write(struct file *filep, const char *buffer, size_t buflen)
   int alloc;
   char *data;
 
-  DEBUGASSERT(filep->f_priv != NULL && filep->f_vnode != NULL);
+  DEBUGASSERT(filep->f_vnode != NULL);
 
   if (buflen == 0)
     {
@@ -1300,7 +1359,7 @@ off_t tmpfs_seek(struct file *filep, off_t offset, int whence)
   struct tmpfs_file_s *tfo;
   off_t position;
 
-  DEBUGASSERT(filep->f_priv != NULL && filep->f_vnode != NULL);
+  DEBUGASSERT(filep->f_vnode != NULL);
 
   /* Recover our private data from the struct file instance */
 
@@ -1407,6 +1466,7 @@ int tmpfs_opendir(struct Vnode *vp, struct fs_dirent_s *dir)
       tmpfs_unlock(fs);
       return -EINTR;
     }
+  tmpfs_lock_directory(tdo);
   tmp->tf_tdo   = tdo;
   tmp->tf_index = 0;
   dir->u.fs_dir = (fs_dir_s)tmp;
@@ -1616,7 +1676,7 @@ int tmpfs_mount(struct Mount *mnt, struct Vnode *device, const void *data)
   struct Vnode *vp = NULL;
   int ret;
 
-  DEBUGASSERT(device == NULL && data != NULL);
+  DEBUGASSERT(device == NULL);
 
   if (fs->tfs_root.tde_object != NULL)
     {
@@ -1784,6 +1844,8 @@ int tmpfs_lookup(struct Vnode *parent, const char *relPath, int len, struct Vnod
       ret = -ENOENT;
       goto errout_with_lock;
     }
+  tmpfs_lock_object(to);
+  to->to_refs++;
 
   (void)VfsHashGet(parent->originMount, (uint32_t)to, &vp, NULL, NULL);
   if (vp == NULL)
@@ -1905,6 +1967,8 @@ int tmpfs_unlink(struct Vnode *parent, struct Vnode *node, const char *relpath)
       goto errout_with_lock;
     }
   DEBUGASSERT(tfo != NULL);
+  tmpfs_lock_directory(parent_dir);
+  tmpfs_lock_file(tfo);
 
   /* Remove the file from parent directory */
   ret = tmpfs_remove_dirent(parent_dir, (struct tmpfs_object_s *)tfo);
@@ -2078,6 +2142,7 @@ int tmpfs_rmdir(struct Vnode *parent, struct Vnode *target, const char *dirname)
       ret = -EISDIR;
       goto errout_with_lock;
     }
+  tmpfs_lock_directory(parent_dir);
 
   /* Is the directory empty?  We cannot remove directories that still
    * contain references to file system objects.  No can we remove the
@@ -2226,6 +2291,9 @@ int tmpfs_rename(struct Vnode *oldVnode, struct Vnode *newParent, const char *ol
     }
 
   tmpfs_lock_directory(oldparent);
+  tmpfs_lock_object(old_to);
+  oldparent->tdo_refs++;
+  old_to->to_refs++;
   tde = tmpfs_find_dirent(newparent_tdo, copy);
   if (tde != NULL)
     {
@@ -2435,6 +2503,7 @@ int tmpfs_stat(struct Vnode *vp, struct stat *st)
     {
       to = fs->tfs_root.tde_object;
     }
+  tmpfs_lock_object(to);
   to->to_refs++;
 
   /* We found it... Return information about the file object in the stat
