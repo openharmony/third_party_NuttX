@@ -129,6 +129,7 @@ DIR *opendir(const char *path)
     }
   if (ret < 0)
     {
+      free(dir);
       goto errout_with_count;
     }
   dir->fd_status = DIRENT_MAGIC;
