@@ -286,7 +286,7 @@ int lowvsyslog(int priority, FAR const char *format, va_list ap);
  *   Kernel Build:  The kernel build is compliant with the POSIX requirement:
  *     There will be one mask for for each user process, controlling the
  *     SYSLOG output only form that process.  There will be a separate mask
- *     accessable only in the kernel code to control kernel SYSLOG output.
+ *     accessible only in the kernel code to control kernel SYSLOG output.
  *
  ****************************************************************************/
 
