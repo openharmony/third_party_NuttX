@@ -1,9 +1,9 @@
 [
     {
         "Name"                  : "NuttX",
-        "License"               : "BSD 3-Clause License",
-        "License File"          : "COPYING",
-        "Version Number"        : "8.2",
+        "License"               : "Apache License V2.0",
+        "License File"          : "LICENSE",
+        "Version Number"        : "10.2",
         "Owner"                 : "tonghaoyang1@huawei.com",
         "Upstream URL"          : "http://www.nuttx.org",
         "Description"           : "Apache NuttX is a mature, real-time embedded operating system (RTOS)."
