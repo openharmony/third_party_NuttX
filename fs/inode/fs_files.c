@@ -60,7 +60,7 @@
 #define ferr PRINTK
 
 #if CONFIG_NFILE_DESCRIPTORS > 0
-struct filelist tg_filelist;
+struct filelist tg_filelist = { 0 };
 #endif
 
 /****************************************************************************

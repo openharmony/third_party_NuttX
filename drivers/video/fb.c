@@ -398,7 +398,7 @@ static int fb_ioctl(struct file *filep, int cmd, unsigned long arg)
 
       case FBIOGET_VIDEOINFO:  /* Get color plane info */
         {
-          struct fb_videoinfo_s vinfo;
+          struct fb_videoinfo_s vinfo = { 0 };
 
           DEBUGASSERT(fb->vtable != NULL &&
                       fb->vtable->getvideoinfo != NULL);
@@ -416,7 +416,7 @@ static int fb_ioctl(struct file *filep, int cmd, unsigned long arg)
 
       case FBIOGET_PLANEINFO:  /* Get video plane info */
         {
-          struct fb_planeinfo_s pinfo;
+          struct fb_planeinfo_s pinfo = { 0 };
 
           DEBUGASSERT(fb->vtable != NULL &&
                       fb->vtable->getplaneinfo != NULL);
@@ -435,7 +435,7 @@ static int fb_ioctl(struct file *filep, int cmd, unsigned long arg)
 #ifdef CONFIG_FB_CMAP
       case FBIOGET_CMAP:       /* Get RGB color mapping */
         {
-          struct fb_cmap_s cmap;
+          struct fb_cmap_s cmap = { 0 };
 
           DEBUGASSERT(fb->vtable != NULL &&
                       fb->vtable->getcmap != NULL);
@@ -470,7 +470,7 @@ static int fb_ioctl(struct file *filep, int cmd, unsigned long arg)
 #ifdef CONFIG_FB_HWCURSOR
       case FBIOGET_CURSOR:     /* Get cursor attributes */
         {
-          struct fb_cursorattrib_s attrib;
+          struct fb_cursorattrib_s attrib = { 0 };
 
           DEBUGASSERT(fb->vtable != NULL &&
                       fb->vtable->getcursor != NULL);
