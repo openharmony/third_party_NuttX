@@ -49,7 +49,9 @@
 #ifdef LOSCFG_FS_ZPFS
 #include "zpfs.h"
 #endif
-
+#ifdef LOSCFG_MNT_CONTAINER
+#include "los_mnt_container_pri.h"
+#endif
 
 /* At least one filesystem must be defined, or this file will not compile.
  * It may be desire-able to make filesystems dynamically registered at
@@ -206,11 +208,48 @@ int mount(const char *source, const char *target,
     }
   if (mountpt_vnode->flag & VNODE_FLAG_MOUNT_NEW)
     {
+#ifdef LOSCFG_MNT_CONTAINER
+      struct Mount *tMnt = NULL;
+      LOS_DL_LIST_FOR_EACH_ENTRY(tMnt, GetMountList(), struct Mount, mountList)
+        {
+          if (tMnt->vnodeCovered == mountpt_vnode)
+            {
+              PRINT_ERR("can't mount to %s, already mounted.\n", target);
+              errcode = -EINVAL;
+              goto errout_with_lock;
+            }
+        }
+#else
       PRINT_ERR("can't mount to %s, already mounted.\n", target);
       errcode = -EINVAL;
       goto errout_with_lock;
+#endif
     }
 
+#ifdef LOSCFG_MNT_CONTAINER
+    struct Mount *cacheMnt = NULL;
+    if (source != NULL)
+      {
+        LOS_DL_LIST_FOR_EACH_ENTRY(cacheMnt, GetMountCache(), struct Mount, mountList)
+          {
+            if (strcmp(cacheMnt->devName, source) == 0)
+              {
+                struct Mount *newMnt = (struct Mount *)zalloc(sizeof(struct Mount));
+                if (newMnt == NULL)
+                  {
+                    PRINT_ERR("New mount alloc failed no memory!\n");
+                    errcode = -EINVAL;
+                    goto errout;
+                  }
+                *newMnt = *cacheMnt;
+                LOS_ListTailInsert(GetMountList(), &(newMnt->mountList));
+                cacheMnt->vnodeCovered->mntCount++;
+                VnodeDrop();
+                return OK;
+              }
+          }
+      }
+#endif
   /* Bind the block driver to an instance of the file system.  The file
    * system returns a reference to some opaque, fs-dependent structure
    * that encapsulates this binding.
@@ -305,6 +344,21 @@ int mount(const char *source, const char *target,
 
   mount_list = GetMountList();
   LOS_ListAdd(mount_list, &mnt->mountList);
+
+#ifdef LOSCFG_MNT_CONTAINER
+  if (source != NULL)
+    {
+      struct Mount *newMnt = (struct Mount *)zalloc(sizeof(struct Mount));
+      if (newMnt == NULL)
+        {
+          PRINT_ERR("New mount alloc failed no memory!\n");
+          errcode = -EINVAL;
+          goto errout;
+        }
+      *newMnt = *mnt;
+      LOS_ListTailInsert(GetMountCache(), &(newMnt->mountList));
+    }
+#endif
 
   if (!strcmp("/", target))
     {

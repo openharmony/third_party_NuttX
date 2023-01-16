@@ -787,6 +787,13 @@ struct files_struct *alloc_files(void)
       (VOID)LOS_MemFree(m_aucSysMem0, files);
       return NULL;
     }
+#ifdef LOSCFG_CHROOT
+  if (VnodeGetRoot() != NULL)
+    {
+      VnodeGetRoot()->useCount++;
+    }
+  files->rootVnode = VnodeGetRoot();
+#endif
 
   return files;
 }
@@ -824,6 +831,13 @@ struct files_struct *dup_fd(struct files_struct *old_files)
     }
   copy_fd_table(new_fdt, old_fdt);
   files->fdt = new_fdt;
+#ifdef LOSCFG_CHROOT
+  if (old_files->rootVnode != NULL)
+    {
+      old_files->rootVnode->useCount++;
+    }
+  files->rootVnode = old_files->rootVnode;
+#endif
 
   return files;
 }
@@ -900,6 +914,13 @@ struct files_struct *create_files_snapshot(const struct files_struct *old_files)
     }
   copy_fds((const struct fd_table_s *)new_fdt, (const struct fd_table_s *)old_fdt);
   files->fdt = new_fdt;
+#ifdef LOSCFG_CHROOT
+  if (old_files->rootVnode != NULL)
+    {
+      old_files->rootVnode->useCount++;
+    }
+  files->rootVnode = old_files->rootVnode;
+#endif
 
   return files;
 
