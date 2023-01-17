@@ -47,6 +47,9 @@
 #include "string.h"
 #include "disk.h"
 #include "fs/mount.h"
+#ifdef LOSCFG_MNT_CONTAINER
+#include "los_mnt_container_pri.h"
+#endif
 
 /****************************************************************************
  * Public Functions
@@ -114,6 +117,35 @@ int umount(const char *target)
       goto errout;
     }
 
+#ifdef LOSCFG_MNT_CONTAINER
+  /* Verify that the vnode is a mountpoint */
+  struct Mount *tMnt = NULL;
+  bool found = false;
+  LOS_DL_LIST_FOR_EACH_ENTRY(tMnt, GetMountList(), struct Mount, mountList)
+    {
+      if (tMnt->vnodeCovered == mountpt_vnode)
+        {
+          found = true;
+          break;
+        }
+    }
+
+  if (!found)
+    {
+      ret = -EINVAL;
+      goto errout;
+    }
+
+  if (tMnt->vnodeCovered->mntCount > 0)
+    {
+      tMnt->vnodeCovered->mntCount--;
+      LOS_ListDelete(&tMnt->mountList);
+      free(tMnt);
+      VnodeDrop();
+      return OK;
+    }
+#endif
+
   /* Get mount point covered vnode and mount structure */
   mnt = mountpt_vnode->originMount;
   if (!mnt)
@@ -158,9 +190,21 @@ int umount(const char *target)
     {
       goto errout;
     }
-
+#ifdef LOSCFG_MNT_CONTAINER
+  struct Mount *tCacheMnt = NULL;
+  LOS_DL_LIST_FOR_EACH_ENTRY(tCacheMnt, GetMountCache(), struct Mount, mountList)
+    {
+      if (tCacheMnt->vnodeCovered == mountpt_vnode)
+        {
+          LOS_ListDelete(&tCacheMnt->mountList);
+          free(tCacheMnt);
+          break;
+        }
+    }
+#endif
   VnodeFree(mountpt_vnode);
   LOS_ListDelete(&mnt->mountList);
+
   free(mnt);
 
   /* Did the unbind method return a contained block driver */
@@ -170,7 +214,24 @@ int umount(const char *target)
     }
 
   covered_vnode->newMount = NULL;
+#ifdef LOSCFG_MNT_CONTAINER
+  tCacheMnt = NULL;
+  found = false;
+  LOS_DL_LIST_FOR_EACH_ENTRY(tCacheMnt, GetMountCache(), struct Mount, mountList)
+    {
+      if (tCacheMnt->vnodeBeCovered == covered_vnode)
+        {
+          found = true;
+          break;
+        }
+    }
+  if (!found)
+    {
+      covered_vnode->flag &= ~(VNODE_FLAG_MOUNT_ORIGIN);
+    }
+#else
   covered_vnode->flag &= ~(VNODE_FLAG_MOUNT_ORIGIN);
+#endif
   VnodeDrop();
 
   return OK;
