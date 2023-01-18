@@ -703,6 +703,14 @@ static void copy_fd_table(struct fd_table_s *new_fdt, struct fd_table_s *old_fdt
 #if defined(LOSCFG_COMPAT_POSIX)
           if ((sysFd >= MQUEUE_FD_OFFSET) && (sysFd < (MQUEUE_FD_OFFSET + CONFIG_NQUEUE_DESCRIPTORS)))
             {
+#if defined(LOSCFG_IPC_CONTAINER)
+              if (OsCurrTaskGet()->cloneIpc)
+                {
+                  FD_CLR(i, new_fdt->proc_fds);
+                  new_fdt->ft_fds[i].sysFd = -1;
+                  continue;
+                }
+#endif
               MqueueRefer(sysFd);
             }
 #endif
@@ -856,6 +864,13 @@ void delete_files(struct files_struct *files)
     {
       return;
     }
+
+#ifdef LOSCFG_CHROOT
+  if ((files->rootVnode != NULL) && (files->rootVnode->useCount > 0))
+    {
+      files->rootVnode->useCount--;
+    }
+#endif
 
   if (files->fdt == NULL)
     {
