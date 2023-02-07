@@ -62,8 +62,11 @@ ssize_t do_readlink(int dirfd, const char *path, char *buf, size_t bufsize)
     {
       goto errout_with_vnode;
     }
-
+#ifdef LOSCFG_PROC_PROCESS_DIR
+  if (vnode->type != VNODE_TYPE_LNK && vnode->type != VNODE_TYPE_VIR_LNK)
+#else
   if (vnode->type != VNODE_TYPE_LNK)
+#endif
     {
       ret = -EINVAL;
       goto errout_with_vnode;
