@@ -37,6 +37,9 @@
 #include "blockproxy.h"
 #include "path_cache.h"
 #include "unistd.h"
+#ifdef LOSCFG_KERNEL_DEV_PLIMIT
+#include "los_plimits.h"
+#endif
 
 /****************************************************************************
  * Public Functions
@@ -159,6 +162,17 @@ int fp_open(int dirfd, const char *path, int oflags, mode_t mode)
           VnodeDrop();
           goto errout;
         }
+#ifdef LOSCFG_KERNEL_DEV_PLIMIT
+      if (vnode->type == VNODE_TYPE_CHR)
+        {
+          if (OsDevLimitCheckPermission(vnode->type, fullpath, oflags) != LOS_OK)
+            {
+              ret = -EPERM;
+              VnodeDrop();
+              goto errout;
+            }
+        }
+#endif
 #ifdef LOSCFG_FS_VFS_BLOCK_DEVICE
       if (vnode->type == VNODE_TYPE_BLK)
         {
@@ -169,6 +183,13 @@ int fp_open(int dirfd, const char *path, int oflags, mode_t mode)
               ret = fd;
               goto errout;
             }
+#ifdef LOSCFG_KERNEL_DEV_PLIMIT
+          if (OsDevLimitCheckPermission(vnode->type, fullpath, oflags) != LOS_OK)
+            {
+              ret = -EPERM;
+              goto errout;
+            }
+#endif
          return fd;
         }
 #endif

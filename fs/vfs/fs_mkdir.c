@@ -65,7 +65,11 @@ int do_mkdir(int dirfd, const char *pathname, mode_t mode)
     {
       goto errout;
     }
+#ifdef LOSCFG_KERNEL_PLIMITS
+  if (!strncmp(fullpath, "/dev", 4) || !strcmp(fullpath, "/proc"))
+#else
   if (!strncmp(fullpath, "/dev", 4) || !strncmp(fullpath, "/proc", 5))
+#endif
     {
       // virtual root create virtual dir
       VnodeHold();
