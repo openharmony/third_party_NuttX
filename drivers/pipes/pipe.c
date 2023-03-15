@@ -357,7 +357,7 @@ errout:
   return VFS_ERROR;
 }
 
-int pipe_init()
+int pipe_init(void)
 {
     int ret = sem_init(&g_pipesem, 0, 1);
     if (ret != 0) {
