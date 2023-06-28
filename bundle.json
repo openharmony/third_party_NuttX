@@ -1,5 +1,5 @@
 {
-    "name": "@ohos/nuttx",
+    "name": "@ohos/NuttX",
     "description": "Apache NuttX is a mature, real-time embedded operating system (RTOS).",
     "version": "3.1",
     "license": "BSD 3-Clause",
@@ -14,7 +14,7 @@
         "en": "README.txt"
     },
     "component": {
-        "name": "nuttx",
+        "name": "NuttX",
         "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
