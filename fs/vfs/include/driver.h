@@ -1,6 +1,9 @@
 /****************************************************************************
  * include/fs/fs.h
  *
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
+ * Based on NuttX originally written by Gregory Nutt 
+ *
  *   Copyright (C) 2007-2009, 2011-2013, 2015-2018 Gregory Nutt. All rights
  *     reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>

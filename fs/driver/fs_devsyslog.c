@@ -1,6 +1,9 @@
 /****************************************************************************
  * fs/driver/fs_devsyslog.c
  *
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
+ * Based on NuttX originally written by Gregory Nutt 
+ *
  *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *

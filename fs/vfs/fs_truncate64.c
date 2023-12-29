@@ -1,6 +1,9 @@
 /****************************************************************************
  * fs/vfs/fs_truncate64.c
  *
+ * Copyright (c) 2023 Huawei Device Co., Ltd. All rights reserved.
+ * Based on NuttX originally written by Gregory Nutt 
+ *
  *   Copyright (C) 2018 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
  *
