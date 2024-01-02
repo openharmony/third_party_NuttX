@@ -176,7 +176,6 @@ tryagain:
     {
       nfs_error("rpcclnt_request failed: %d\n", error);
 
-
       if (error != -ENOTCONN)
         {
           return error;
@@ -184,20 +183,19 @@ tryagain:
 
       /* Reconnect */
 
-
       error = rpcclnt_connect(nmp->nm_rpcclnt);
 
-      if(error != 0)
+      if (error != 0)
         {
           return error;
         }
 
       /* Send the request again */
 
-      error = rpcclnt_request(clnt, procnum, NFS_PROG, NFS_VER3, 
-                            request, reqlen, response, resplen);
+      error = rpcclnt_request(clnt, procnum, NFS_PROG, NFS_VER3,
+                              request, reqlen, response, resplen);
       
-      if(error != 0)
+      if (error != 0)
         {
           return error;
         }

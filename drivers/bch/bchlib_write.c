@@ -186,9 +186,7 @@ ssize_t bchlib_write(void *handle, const char *buffer, loff_t offset, size_t len
       /* Adjust counts */
 
       byteswritten += len;
-    }
-
-  
+    } 
 
   return byteswritten;
 }

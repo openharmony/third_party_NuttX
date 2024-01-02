@@ -496,7 +496,7 @@ struct LOOKUP3resok
 struct READ3args
 {
   struct file_handle fhandle;           /* Variable length */
-  nfsuint64           offset;          
+  nfsuint64           offset;
   uint32_t           count;
 };
 
