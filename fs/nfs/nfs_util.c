@@ -175,7 +175,33 @@ tryagain:
   if (error != 0)
     {
       nfs_error("rpcclnt_request failed: %d\n", error);
-      return error;
+
+
+      if (error != -ENOTCONN)
+        {
+          return error;
+        }
+
+      /* Reconnect */
+
+
+      error = rpcclnt_connect(nmp->nm_rpcclnt);
+
+      if(error != 0)
+        {
+          return error;
+        }
+
+      /* Send the request again */
+
+      error = rpcclnt_request(clnt, procnum, NFS_PROG, NFS_VER3, 
+                            request, reqlen, response, resplen);
+      
+      if(error != 0)
+        {
+          return error;
+        }
+
     }
 
   memcpy(&replyh, response, sizeof(struct nfs_reply_header));

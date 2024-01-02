@@ -112,6 +112,7 @@ static int  tmpfs_find_directory(struct tmpfs_s *fs,
 int tmpfs_close(struct file *filep);
 off_t tmpfs_seek(struct file *filep, off_t offset, int whence);
 int tmpfs_ioctl(struct file *filep, int cmd, unsigned long arg);
+int tmpfs_sync(struct file *filep);
 int tmpfs_closedir(struct Vnode *node, struct fs_dirent_s *dir);
 int tmpfs_rewinddir(struct Vnode *vp, struct fs_dirent_s *dir);
 int tmpfs_truncate(struct Vnode *vp, off_t len);
@@ -173,7 +174,7 @@ struct file_operations_vfs tmpfs_fops = {
     .ioctl = tmpfs_ioctl,
     .mmap = OsVfsFileMmap,
     .close = tmpfs_close,
-    .fsync = NULL,
+    .fsync = tmpfs_sync,
 };
 
 static struct tmpfs_s tmpfs_superblock = {0};
@@ -1399,6 +1400,15 @@ off_t tmpfs_seek(struct file *filep, off_t offset, int whence)
 int tmpfs_ioctl(struct file *filep, int cmd, unsigned long arg)
 {
   return -EINVAL;
+}
+
+/****************************************************************************
+ * Name: tmpfs_sync
+ ****************************************************************************/
+
+int tmpfs_sync(struct file *filep)
+{
+  return 0;
 }
 
 /****************************************************************************

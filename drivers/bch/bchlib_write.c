@@ -127,6 +127,15 @@ ssize_t bchlib_write(void *handle, const char *buffer, loff_t offset, size_t len
           nsectors = bch->nsectors - sector;
         }
 
+      /* Flush the dirty sector to keep the sector sequence */
+
+      ret = bchlib_flushsector(bch);
+      if (ret < 0)
+        {
+          PRINTK("ERROR: Flush failed: %d\n", ret);
+          return ret;
+        }
+
       /* Write the contiguous sectors */
 
       ret = los_disk_write(bch->disk->disk_id, (const void *)buffer,
@@ -179,14 +188,7 @@ ssize_t bchlib_write(void *handle, const char *buffer, loff_t offset, size_t len
       byteswritten += len;
     }
 
-  /* Finally, flush any cached writes to the device as well */
-
-  ret = bchlib_flushsector(bch);
-  if (ret < 0)
-    {
-      PRINTK("ERROR: Flush failed: %d\n", ret);
-      return byteswritten;
-    }
+  
 
   return byteswritten;
 }
