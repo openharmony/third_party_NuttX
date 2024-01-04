@@ -144,7 +144,7 @@ struct pipe_dev_s *pipecommon_allocdev(size_t bufsize, const char *name)
       * should not have priority inheritance enabled.
       */
 
-      dev->d_bufsize = bufsize;
+      dev->d_bufsize = bufsize + 1; /* +1 to compensate the full indicator */
     }
 
   return dev;
