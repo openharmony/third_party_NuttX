@@ -563,6 +563,7 @@ int nfs_bind(struct Vnode *blkdriver, const void *data,
   error = pthread_mutex_init(&nmp->nm_mux, &attr);
   if (error)
     {
+      free(nmp);
       return -error;
     }
 
