@@ -111,6 +111,11 @@ int do_symlink(const char *target, int newfd, const char *path)
       goto errout;
     }
 
+  if (target == NULL)
+    {
+      goto errout;
+    }
+
   if (strlen(target) >= PATH_MAX)
     {
       ret = -ENAMETOOLONG;
