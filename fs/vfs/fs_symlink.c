@@ -99,7 +99,7 @@ int do_symlink(const char *target, int newfd, const char *path)
   struct Mount *mount = NULL;
   int ret;
 
-  if (!path)
+  if (!target || !path)
     {
       ret = -EFAULT;
       goto errout;
@@ -108,11 +108,6 @@ int do_symlink(const char *target, int newfd, const char *path)
   if (*path == '\0')
     {
       ret = -EINVAL;
-      goto errout;
-    }
-
-  if (target == NULL)
-    {
       goto errout;
     }
 
