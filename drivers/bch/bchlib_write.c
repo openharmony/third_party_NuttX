@@ -1,6 +1,8 @@
 /****************************************************************************
  * drivers/bch/bchlib_write.c
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -115,8 +117,48 @@ ssize_t bchlib_write(void *handle, const char *buffer, loff_t offset, size_t len
       len          -= nbytes;
     }
 
-  /* Then write all of the full sectors following the partial sector
-   * directly from the user buffer.
+  /* Then write all of the full sectors following the partial sector.. */
+
+  #ifdef CONFIG_BCH_FORCE_INDIRECT
+
+  /* indirectly by using sector buffer.
+   */
+
+  while (len > 0)
+    {
+      /* Read the sector into the sector buffer */
+
+      ret = bchlib_readsector(bch, sector);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
+      /* Copy the data from the user buffer to the sector buffer */
+
+      nbytes = len > bch->sectsize ? bch->sectsize : len;
+      memcpy(bch->buffer, buffer, nbytes);
+      bch->dirty = true;
+
+      /* Write the sector back to the block device */
+
+      ret = bchlib_flushsector(bch);
+      if (ret < 0)
+        {
+          ferr("ERROR: Flush failed: %d\n", ret);
+          return ret;
+        }
+
+      /* Adjust pointers and counts */
+
+      buffer       += nbytes;
+      len          -= nbytes;
+      byteswritten += nbytes;
+      sector++;
+    }
+#else
+
+   /* directly from the user buffer.
    */
 
   if (len >= bch->sectsize)
@@ -187,6 +229,7 @@ ssize_t bchlib_write(void *handle, const char *buffer, loff_t offset, size_t len
 
       byteswritten += len;
     } 
+#endif /* CONFIG_BCH_FORCE_INDIRECT */
 
   return byteswritten;
 }
