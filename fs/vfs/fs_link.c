@@ -111,7 +111,11 @@ int do_link(int oldfd, const char *oldpath, int newfd, const char *newpath, int 
       ret = -EEXIST;
       goto errout_with_vnode;
     }
-
+  if (VfsVnodePermissionCheck(new_parent_vnode, WRITE_OP | EXEC_OP) != 0)
+    {
+      ret = -EACCES;
+      goto errout_with_vnode;
+    }
   if (old_vnode->originMount != new_parent_vnode->originMount)
     {
       ret = -EXDEV;

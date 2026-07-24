@@ -132,7 +132,11 @@ int do_symlink(const char *target, int newfd, const char *path)
       ret = -EEXIST;
       goto errout_with_vnode;
     }
-
+  if (VfsVnodePermissionCheck(parent_vnode, WRITE_OP | EXEC_OP) != 0)
+    {
+      ret = -EACCES;
+      goto errout_with_vnode;
+    }
   if (!parent_vnode->vop || !parent_vnode->vop->Symlink)
     {
       ret = -ENOSYS;
