@@ -824,7 +824,7 @@ int fb_register(int display, int plane)
       (void)snprintf(devname, 16, "/dev/fb%d.%d", display, plane);
     }
 
-  ret = register_driver(devname, &fb_fops, 0666, (void *)fb);
+  ret = register_driver(devname, &fb_fops, 0600, (void *)fb);
   if (ret < 0)
     {
       gerr("ERROR: register_driver() failed: %d\n", ret);
