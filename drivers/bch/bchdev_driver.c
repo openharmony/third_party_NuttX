@@ -117,6 +117,7 @@ static int bch_close(struct file *filep)
   struct Vnode *vnode = filep->f_vnode;
   struct bchlib_s *bch;
   int ret = OK;
+  bool need_teardown = false;
 
   bch = (struct bchlib_s *)((struct drv_data *)vnode->data)->priv;
 
@@ -144,26 +145,21 @@ static int bch_close(struct file *filep)
 
       if (bch->refs == 0 && bch->unlinked)
         {
-           /* Tear the driver down now. */
-
-           ret = bchlib_teardown((void *)bch);
-
-           /* bchlib_teardown() would only fail if there are outstanding
-            * references on the device.  Since we know that is not true, it
-            * should not fail at all.
-            */
-
-           DEBUGASSERT(ret >= 0);
-           if (ret >= 0)
-             {
-                /* Return without releasing the stale semaphore */
-
-                return OK;
-             }
+           need_teardown = true;
         }
     }
 
   bchlib_semgive(bch);
+
+  if(need_teardown)
+    {
+      ret = bchlib_teardown((void *)bch);
+      DEBUGASSERT(ret >= 0);
+      if (ret >= 0)
+        {
+          return OK;
+        }
+    }
   return ret;
 }
 
@@ -297,7 +293,16 @@ static int bch_ioctl(struct file *filep, int cmd, unsigned long arg)
   int ret = -ENOTTY;
 
   bch = (struct bchlib_s *)((struct drv_data *)vnode->data)->priv;
-
+  if (bch == NULL)
+    {
+      return -EINVAL;
+    }
+  bchlib_semtake(bch);
+  if(bch->refs == 0)
+    {
+      bchlib_semtake(bch);
+      return -EIO;
+    }
   /* Process the call according to the command */
 
   switch (cmd)
@@ -309,7 +314,6 @@ static int bch_ioctl(struct file *filep, int cmd, unsigned long arg)
           struct bchlib_s **bchr =
             (struct bchlib_s **)((uintptr_t)arg);
 
-          bchlib_semtake(bch);
           if (!bchr || bch->refs == MAX_OPENCNT)
             {
               ret   = -EINVAL;
@@ -327,8 +331,6 @@ static int bch_ioctl(struct file *filep, int cmd, unsigned long arg)
                   ret   = OK;
                 }
             }
-
-          bchlib_semgive(bch);
         }
         break;
 
@@ -367,7 +369,7 @@ static int bch_ioctl(struct file *filep, int cmd, unsigned long arg)
         }
       break;
     }
-
+  bchlib_semgive(bch);
   return ret;
 }
 
