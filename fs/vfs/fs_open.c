@@ -176,6 +176,13 @@ int fp_open(int dirfd, const char *path, int oflags, mode_t mode)
 #ifdef LOSCFG_FS_VFS_BLOCK_DEVICE
       if (vnode->type == VNODE_TYPE_BLK)
         {
+          accmode = oflag_convert_mode(oflags);
+          if (VfsVnodePermissionCheck(vnode, accmode))
+            {
+              ret = -EACCES;
+              VnodeDrop();
+              goto errout;
+            }
           VnodeDrop();
           int fd = block_proxy(fullpath, oflags);
           if (fd < 0)
